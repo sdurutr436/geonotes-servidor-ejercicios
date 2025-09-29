@@ -206,7 +206,11 @@ public class GeoNotes {
 
     // TODO: implementar exportNotesToMarkdown()
     public static void exportNotesToMarkdown() {
-        
+        MarkdownExporter exporter = new MarkdownExporter();
+        timeline.getNotes().values().forEach(exporter::addNote);
+        String markdown = exporter.export();
+        System.out.println("\n--- Exportando notas a Markdown ---");
+        System.out.println(markdown);
     }
 
     private static void seedExamples() {

@@ -38,3 +38,4 @@ public final class MarkdownExporter implements Exporter {
             .collect(Collectors.joining("\n"));
     }
 }
+
