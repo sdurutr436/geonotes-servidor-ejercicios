@@ -75,6 +75,7 @@ public class GeoNotes {
                     case 4 -> exportNotesToJson();
                     case 5 -> exportNotesToMarkdown();
                     case 6 -> running = false;
+                    case 7 -> listLatestNotes(); // ✅ Nueva opción añadida para D1
                     default -> System.out.println("❌ Opción no válida. Inténtalo de nuevo.");
                 }
             } catch (NumberFormatException e) {
@@ -96,6 +97,7 @@ public class GeoNotes {
         System.out.println("4. Exportar notas a JSON (Text Blocks)");
         System.out.println("5. Exportar notas a Markdown");
         System.out.println("6. Salir");
+        System.out.println("7. Listar últimas N notas"); // ✅ Nueva opción mostrada en el menú
         System.out.print("Elige una opción: ");
     }
 
@@ -211,6 +213,24 @@ public class GeoNotes {
         String markdown = exporter.export();
         System.out.println("\n--- Exportando notas a Markdown ---");
         System.out.println(markdown);
+    }
+
+    private static void listLatestNotes() {
+        System.out.print("\n¿Cuántas notas recientes quieres ver? ");
+        try {
+            int n = Integer.parseInt(scanner.nextLine());
+            var latestNotes = timeline.latest(n);
+            if (latestNotes.isEmpty()) {
+                System.out.println("No hay notas en la línea temporal.");
+                return;
+            }
+            System.out.println("\n--- Últimas " + n + " notas ---");
+            latestNotes.forEach(note -> System.out.printf(
+                    "ID: %d | %s | %s | Fecha: %s%n",
+                    note.id(), note.title(), note.content(), note.createdAt().toString()));
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Entrada no válida. Por favor, ingresa un número.");
+        }
     }
 
     private static void seedExamples() {
