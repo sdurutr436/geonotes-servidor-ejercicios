@@ -77,13 +77,16 @@ El proyecto se ha completado **hasta el bloque C (inclusive C1 y C2)** según la
 
 ---
 
-### 🔹 Bloque D — Listar últimas N notas (Streams y Comparator)
+### 🔹 Bloque D — Funcionalidades avanzadas
 
 **D1. Orden por fecha y límite**
-- En `Timeline` se añadió el método:
-  public java.util.List<Note> latest(int n) { ... }
-  que devuelve las `n` notas más recientes según `createdAt` descendente.
-- En la CLI (`GeoNotes`) se añadió la opción **7. Listar últimas N notas**:
-  - Solicita al usuario cuántas notas quiere ver.
-  - Muestra la información básica de cada nota (`ID`, `title`, `content`, `createdAt`).
-- Internamente se usan **Streams**, **Comparator** y **limit()** para obtener las notas más recientes de forma concisa y eficiente.
+- Se añadió el método `Timeline.latest(int n)` para devolver las N notas más recientes.
+- Se creó la opción en CLI **“Listar últimas N notas”**.
+- Aprovecha `Streams` y `Comparator.comparing(Note::createdAt).reversed()` junto con `limit(n)`.
+
+**D2. Búsqueda avanzada**
+- Nueva opción en CLI **“Buscar avanzada”**:
+  - Permite filtrar notas por rango de latitud/longitud.
+  - Permite filtrar por palabra clave en `title` o `content`.
+- Se reutiliza `Match.isInArea(GeoPoint, GeoArea)` para comprobar si un punto geográfico está dentro de un área.
+- Permite combinar ambos criterios para obtener resultados más precisos.

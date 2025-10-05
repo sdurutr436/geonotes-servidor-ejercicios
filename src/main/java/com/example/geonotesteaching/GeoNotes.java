@@ -55,19 +55,7 @@ public class GeoNotes {
         while (running) {
             printMenu();
             try {
-
-                /*
-                 * Leemos la opción como String y la convertimos a int.
-                 * En lugar de nextInt(), usamos nextLine()+parseInt() para evitar "pegarse" con saltos de línea restantes.
-                 */
                 int choice = Integer.parseInt(scanner.nextLine().trim());
-
-                /*
-                 * SWITCH EXPRESSION (Java 14):
-                 * - Sintaxis con flechas (->), no hace falta 'break' y es más clara.
-                 * - Si usáramos bloques complejos, podríamos usar 'yield' para devolver un valor.
-                 * Aquí lo empleamos en su forma de "switch moderno" sobre efectos (no devuelve valor).
-                 */
                 switch (choice) {
                     case 1 -> createNote();
                     case 2 -> listNotes();
@@ -75,14 +63,11 @@ public class GeoNotes {
                     case 4 -> exportNotesToJson();
                     case 5 -> exportNotesToMarkdown();
                     case 6 -> running = false;
-                    case 7 -> listLatestNotes(); // ✅ Nueva opción añadida para D1
+                    case 7 -> listLatestNotes(); // D1
+                    case 8 -> advancedSearch();  // ✅ D2
                     default -> System.out.println("❌ Opción no válida. Inténtalo de nuevo.");
                 }
             } catch (NumberFormatException e) {
-                /*
-                 * Manejo de errores "clásico" (en Kotlin tendrías null-safety y Result más idiomáticos).
-                 * Aquí mostramos un mensaje claro al usuario.
-                 */
                 System.out.println("❌ Entrada no válida. Por favor, ingresa un número.");
             }
         }
@@ -97,42 +82,23 @@ public class GeoNotes {
         System.out.println("4. Exportar notas a JSON (Text Blocks)");
         System.out.println("5. Exportar notas a Markdown");
         System.out.println("6. Salir");
-        System.out.println("7. Listar últimas N notas"); // ✅ Nueva opción mostrada en el menú
+        System.out.println("7. Listar últimas N notas"); // D1
+        System.out.println("8. Búsqueda avanzada");       // ✅ D2
         System.out.print("Elige una opción: ");
     }
 
     private static void createNote() {
         System.out.println("\n--- Crear una nueva nota ---");
-
-        // 'var' (Java 10) para inferencia local: útil para código más legible; en APIs públicas, mejor tipos explícitos.
         System.out.print("Título: ");
         var title = scanner.nextLine();
         System.out.print("Contenido: ");
         var content = scanner.nextLine();
-
-        /*
-         * Lectura robusta de números: mejor parsear desde nextLine() para controlar errores y limpieza del buffer.
-         * (Si fuese una app real, haríamos bucles hasta entrada válida).
-         */
         System.out.print("Latitud: ");
         var lat = Double.parseDouble(scanner.nextLine());
         System.out.print("Longitud: ");
         var lon = Double.parseDouble(scanner.nextLine());
         try {
-
-            /*
-             * RECORDS (Java 16):
-             * - GeoPoint es un record con "compact constructor" que valida rangos (ver clase GeoPoint).
-             * - Note también es record; su constructor valida title/location/createdAt.
-             * Ventaja: menos boilerplate (constructor/getters/equals/hashCode/toString generados).
-             */
-
             var geoPoint = new GeoPoint(lat, lon);
-
-            /*
-             * Instant.now() (java.time) para timestamps — la API java.time es la recomendada desde Java 8.
-             * attachment lo dejamos a null en este flujo simple; podrías pedirlo al usuario.
-             */
             var note = new Note(noteCounter++, title, content, geoPoint, Instant.now(), null);
             timeline.addNote(note);
             System.out.println("✅ Nota creada con éxito.");
@@ -147,14 +113,9 @@ public class GeoNotes {
             System.out.println("No hay notas creadas.");
             return;
         }
-
-        /*
-         * Bucle forEach sobre el Map<Long, Note>.
-         * En Kotlin harías algo similar con forEach y String templates.
-         */
         timeline.getNotes().forEach((id, note) -> {
             var gp = note.location();
-            var region = Match.where(gp); // usamos record patterns
+            var region = Match.where(gp);
             var attachmentInfo = (note.attachment() == null)
                     ? "—"
                     : Describe.describeAttachment(note.attachment());
@@ -167,11 +128,6 @@ public class GeoNotes {
         System.out.print("\nIntroduce la palabra clave para filtrar: ");
         var keyword = scanner.nextLine();
         System.out.println("\n--- Resultados de búsqueda ---");
-
-        /*
-         * Streams (desde Java 8) — muy similares a las funciones de colección en Kotlin.
-         * Filtramos por título o contenido y recogemos en una List inmutable (toList() desde Java 16 retorna una lista no modificable).
-         */
         var filtered = timeline.getNotes().values().stream()
                 .filter(n -> n.title().contains(keyword) || n.content().contains(keyword))
                 .toList();
@@ -184,29 +140,12 @@ public class GeoNotes {
     }
 
     private static void exportNotesToJson() {
-        /*
-         * INNER CLASS NO ESTÁTICA:
-         * - Timeline.Render es una clase interna "no estática" (inner class).
-         * - Por eso se instancia con: timeline.new Render()
-         * - Así Render queda LIGADA a ESTA instancia de Timeline (y accede a sus 'notes').
-         *
-         * Si Render fuera 'static', se instanciaría como 'new Timeline.Render(timeline)' pasando la Timeline explícita.
-         */
-        var renderer = timeline.new Render(); // ¿Por qué esto no funciona new Timeline().new Render();?
-
-        /*
-         * TEXT BLOCKS (Java 15) — ver Timeline.Render:
-         * - Allí se usan literales de cadena multilínea """ ... """ para construir JSON legible.
-         * - Se normaliza la indentación y no necesitas escapar comillas constantemente.
-         */
+        var renderer = timeline.new Render();
         String json = renderer.export();
-
         System.out.println("\n--- Exportando notas a JSON ---");
         System.out.println(json);
     }
 
-
-    // TODO: implementar exportNotesToMarkdown()
     public static void exportNotesToMarkdown() {
         MarkdownExporter exporter = new MarkdownExporter();
         timeline.getNotes().values().forEach(exporter::addNote);
@@ -233,12 +172,44 @@ public class GeoNotes {
         }
     }
 
+    // ✅ D2: Búsqueda avanzada
+    private static void advancedSearch() {
+        try {
+            System.out.print("\nLatitud mínima: ");
+            double latMin = Double.parseDouble(scanner.nextLine());
+            System.out.print("Latitud máxima: ");
+            double latMax = Double.parseDouble(scanner.nextLine());
+            System.out.print("Longitud mínima: ");
+            double lonMin = Double.parseDouble(scanner.nextLine());
+            System.out.print("Longitud máxima: ");
+            double lonMax = Double.parseDouble(scanner.nextLine());
+            System.out.print("Palabra clave (title/content, opcional): ");
+            String keyword = scanner.nextLine().trim();
+
+            GeoArea area = new GeoArea(new GeoPoint(latMin, lonMin), new GeoPoint(latMax, lonMax));
+
+            var results = timeline.getNotes().values().stream()
+                    .filter(n -> Match.isInArea(n.location(), area))
+                    .filter(n -> keyword.isEmpty() || n.title().contains(keyword) || n.content().contains(keyword))
+                    .toList();
+
+            System.out.println("\n--- Resultados de búsqueda avanzada ---");
+            if (results.isEmpty()) {
+                System.out.println("No se encontraron notas que cumplan los criterios.");
+                return;
+            }
+            results.forEach(note -> System.out.printf("ID: %d | %s | %s | loc=(%.6f, %.6f) | Fecha: %s%n",
+                    note.id(), note.title(), note.content(),
+                    note.location().lat(), note.location().lon(),
+                    note.createdAt().toString()));
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Entrada no válida. Por favor, ingresa números correctos para lat/lon.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Error en coordenadas: " + e.getMessage());
+        }
+    }
+
     private static void seedExamples() {
-        /*
-         * Semilla de ejemplo para la tarea Gradle 'examples'.
-         * También aquí vemos la jerarquía sellada (sealed) Attachment con tres records:
-         *   Photo, Audio, Link — y cómo se pasan a Note como polimorfismo clásico.
-         */
         timeline.addNote(new Note(noteCounter++, "Cádiz", "Playita",
                 new GeoPoint(36.5297, -6.2927),
                 Instant.now(),
@@ -253,13 +224,5 @@ public class GeoNotes {
                 new GeoPoint(37.8790, -4.7794),
                 Instant.now(),
                 new Link("http://cordoba", "Oficial")));        
-        /*
-         * DONDE VER EL RESTO DE NOVEDADES:
-         * - Pattern matching para instanceof + switch con guardas 'when': ver Describe.
-         * - Record patterns (Java 21): ver Match (desestructurar GeoPoint en switch/if).
-         * - SequencedMap / reversed(): ver Timeline (versión moderna). En este “teaching” usamos LinkedHashMap clásico,
-         *   pero explica a los alumnos que en Java 21 LinkedHashMap implementa SequencedMap y se puede pedir la vista invertida.
-         * - Virtual Threads: demo aparte en el otro proyecto “moderno” (no se usan aquí).
-         */
     }
 }
