@@ -76,3 +76,14 @@ El proyecto se ha completado **hasta el bloque C (inclusive C1 y C2)** según la
 - Se añadió una opción en la CLI para exportar Markdown desde el menú principal.
 
 ---
+
+### 🔹 Bloque D — Listar últimas N notas (Streams y Comparator)
+
+**D1. Orden por fecha y límite**
+- En `Timeline` se añadió el método:
+  public java.util.List<Note> latest(int n) { ... }
+  que devuelve las `n` notas más recientes según `createdAt` descendente.
+- En la CLI (`GeoNotes`) se añadió la opción **7. Listar últimas N notas**:
+  - Solicita al usuario cuántas notas quiere ver.
+  - Muestra la información básica de cada nota (`ID`, `title`, `content`, `createdAt`).
+- Internamente se usan **Streams**, **Comparator** y **limit()** para obtener las notas más recientes de forma concisa y eficiente.
