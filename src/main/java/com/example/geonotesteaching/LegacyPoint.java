@@ -34,12 +34,30 @@ public class LegacyPoint {
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        int hash = 5;
+        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lat) ^ (Double.doubleToLongBits(this.lat) >>> 32));
+        hash = 83 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
+        return hash;
     }
 
     @Override
     public boolean equals(Object obj) {
-        return this.equals(obj);
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final LegacyPoint other = (LegacyPoint) obj;
+        if (Double.doubleToLongBits(this.lat) != Double.doubleToLongBits(other.lat)) {
+            return false;
+        }
+        return Double.doubleToLongBits(this.lon) == Double.doubleToLongBits(other.lon);
     }
+
+
 
 }
